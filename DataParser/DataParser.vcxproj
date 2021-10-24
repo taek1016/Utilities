@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,10 +21,12 @@
   <ItemGroup>
     <ClInclude Include="define.h" />
     <ClInclude Include="Ini.h" />
+    <ClInclude Include="XML.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ini.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="XML.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

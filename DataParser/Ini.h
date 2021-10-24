@@ -2,6 +2,7 @@
 #define __TAEK_INI_PARSER_H__
 
 #include <fstream>
+#include <list>
 #include <map>
 #include <vector>
 
@@ -18,19 +19,21 @@ private:
 	class Section
 	{
 	public:
-		Section();
+		Section(const str& name);
 		~Section();
 
+		const str& GetName(void) const;
 		bool AddData(str key, str data);
 		bool ChangeData(str key, str data);
 		bool Get(str key, str& result);
 		void WriteData(std::fstream& fileStream);
 
 	private:
+		str m_Name;
 		KeyValueMap m_Map;
 	};
 
-	typedef std::map<str, Section*> SectionMap;
+	typedef std::list<Section*> SectionList;
 
 public:
 	Ini(const str path);
@@ -51,15 +54,17 @@ public:
 	static str TrimStr(const str& from);
 
 private:
+	const bool getSection(const str& name, Ini::Section* outSection) const;
+
 	bool isDigit(bool (*determine)(char), const str& data, const size_t startPos, const size_t endPos);
 
 	static bool isInteger(char character);
 	static bool isFloating(char character);
 
 private:
-	SectionMap m_Sections;
+	SectionList m_Sections;
 };
 
-END_NAMESPACE
+END_UTILITY_NAMESPACE
 
 #endif // !__TAEK_INI_PARSER_H__

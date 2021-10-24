@@ -3,13 +3,18 @@
 USING_TAEK_UTILITY_NAMESPACE(IniParser);
 USING_NAMESPACE(std);
 
-Ini::Section::Section()
+Ini::Section::Section(const str& name)
+	: m_Name(name)
 {
 }
 
 Ini::Section::~Section()
 {
 	m_Map.clear();
+}
+const str& Ini::Section::GetName(void) const
+{
+	return m_Name;
 }
 
 bool Ini::Section::AddData(str key, str data)
@@ -81,20 +86,21 @@ Ini::~Ini()
 {
 	for (auto iter = m_Sections.begin(); iter != m_Sections.end(); ++iter)
 	{
-		delete iter->second;
-		iter->second = nullptr;
+		delete (*iter);
+		(*iter) = nullptr;
 	}
+	m_Sections.clear();
 }
 
 bool Ini::TryAddData(str sectionName, str key, str data)
 {
-	if (m_Sections.end() == m_Sections.find(sectionName))
+	Section* section = nullptr;
+	if (!getSection(sectionName, section))
 	{
-		Section* section = new Section();
-		m_Sections.insert(make_pair(sectionName, section));
-	}
+		section = new Section(sectionName);
 
-	Section* section = m_Sections.find(sectionName)->second;
+		m_Sections.push_back(section);
+	}
 
 	if (!section->AddData(key, data))
 	{
@@ -106,14 +112,11 @@ bool Ini::TryAddData(str sectionName, str key, str data)
 
 bool Ini::TryChangeData(str sectionName, str key, str data)
 {
-	auto sectionFind = m_Sections.find(sectionName);
-
-	if (m_Sections.end() == sectionFind)
+	Section* section = nullptr;
+	if (!getSection(sectionName, section))
 	{
 		return false;
 	}
-
-	Section* section = sectionFind->second;
 
 	if (section->ChangeData(key, data))
 	{
@@ -125,14 +128,11 @@ bool Ini::TryChangeData(str sectionName, str key, str data)
 
 bool Ini::TryGetString(str sectionName, str key, str& data)
 {
-	auto sectionFind = m_Sections.find(sectionName);
-
-	if (m_Sections.end() == sectionFind)
+	Section* section = nullptr;
+	if (!getSection(sectionName, section))
 	{
 		return false;
 	}
-
-	Section* section = sectionFind->second;
 
 	if (!section->Get(key, data))
 	{
@@ -231,11 +231,11 @@ bool Ini::TrySave(const str path)
 	{
 		memset(buffer, 0, sizeof(char) * BUFFER_SIZE);
 
-		snprintf(buffer, BUFFER_SIZE, "[%s]\n", iter->first.c_str());
+		snprintf(buffer, BUFFER_SIZE, "[%s]\n", (*iter)->GetName().c_str());
 
 		fileStream.write(buffer, strlen(buffer));
 
-		iter->second->WriteData(fileStream);
+		(*iter)->WriteData(fileStream);
 	}
 
 	return true;
@@ -275,16 +275,11 @@ bool Ini::TryRead(const str path)
 			size_t parenthesisEnd = content.find_last_of(']');
 			str name = content.substr(parenthesisStart + 1, parenthesisEnd - 1);
 
-			auto sectionFind = m_Sections.find(name);
-			if (m_Sections.end() == sectionFind)
+			if (!getSection(name, section))
 			{
-				section = new Section();
+				section = new Section(name);
 
-				m_Sections.insert(make_pair(name, section));
-			}
-			else
-			{
-				section = sectionFind->second;
+				m_Sections.push_back(section);
 			}
 		}
 		else
@@ -327,6 +322,20 @@ str Ini::TrimStr(const str& from)
 	}
 
 	return from.substr(leftSide, rightSide);
+}
+
+const bool Ini::getSection(const str& name, Ini::Section* outSection) const
+{
+	for (auto iter : m_Sections)
+	{
+		if (name == iter->GetName())
+		{
+			outSection = iter;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool Ini::isDigit(bool (*determine)(const char), const str& data, const size_t startPos, const size_t endPos)
